@@ -1,0 +1,54 @@
+namespace shoelace
+
+autoloader : Html
+autoloader =
+  script
+    [ type_ "module"
+    , src
+        "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.0/cdn/shoelace-autoloader.js"
+    ]
+    []
+
+autoloader.doc : Doc
+autoloader.doc =
+  \{{
+  https://shoelace.style/getting-started/installation#cdn-installation-easiest
+  }}
+
+components.sl_button : [Attribute] -> [Html] -> Html
+components.sl_button = element "sl-button"
+
+components.sl_button.Attribute.variant : Text -> Attribute
+components.sl_button.Attribute.variant = Attribute "variant"
+
+components.sl_card : [Attribute] -> [Html] -> Html
+components.sl_card = element "sl-card"
+
+components.sl_dialog : [Attribute] -> [Html] -> Html
+components.sl_dialog = element "sl-dialog"
+
+components.sl_icon : [Attribute] -> [Html] -> Html
+components.sl_icon = element "sl-icon"
+
+components.sl_input : [Attribute] -> [Html] -> Html
+components.sl_input = element "sl-input"
+
+themes.dark : Html
+themes.dark =
+  hojberg_html_2_7_0.link
+    [ rel "stylesheet"
+    , href
+        "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.0/cdn/themes/dark.css"
+    ]
+
+themes.dark.doc : Doc
+themes.dark.doc = \{{ https://shoelace.style/getting-started/themes }}
+
+themes.light : Html
+themes.light =
+  hojberg_html_2_7_0.link
+    [ rel "stylesheet"
+    , href
+        "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.0/cdn/themes/light.css"
+    ]
+

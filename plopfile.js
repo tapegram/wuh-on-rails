@@ -12,4 +12,13 @@ export default function (plop) {
       templateFile: 'templates/scaffold_app.u.hbs'
     }]
   });
+  plop.setGenerator('shoelace-ui', {
+    description: 'Add in shoelace types',
+    prompts: [],
+    actions: [{
+      type: 'add',
+      path: "./shoelace.u",
+      templateFile: 'templates/shoelace.u.hbs'
+    }]
+  });
 };
