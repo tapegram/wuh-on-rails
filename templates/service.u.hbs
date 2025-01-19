@@ -13,42 +13,43 @@ ability {{ pascalCase model }}Service where
 {{ pascalCase model }}Service.run : Database -> '{g, {{ pascalCase model }}Service} a -> {g, Remote} a
 {{ pascalCase model }}Service.run db p =
   {{ pascalCase model }}s : OrderedTable ({{ pascalCase model }}.Id) {{ pascalCase model }}
-  {{ pascalCase model }}s = OrderedTable.named db "pascalCaseModels" Universal.ordering
+  {{ pascalCase model }}s = OrderedTable.named db "{{ pascalCase model }}s" Universal.ordering
 
   get{{ pascalCase model }}' : {{ pascalCase model }}.Id ->{g, Remote} (Optional {{ pascalCase model }})
-  get{{ pascalCase model }}' pascalCaseModelId = OrderedTable.tryRead pascalCaseModels pascalCaseModelId
+  get{{ pascalCase model }}' {{ camelCase model }}Id = OrderedTable.tryRead {{ pascalCase model }}s {{ camelCase model }}Id
 
   getAll' : '{g, Remote} (List {{ pascalCase model }})
-  getAll' = do OrderedTable.toStream pascalCaseModels |> Stream.map at2 |> Stream.toList
+  getAll' = do OrderedTable.toStream {{ pascalCase model }}s |> Stream.map at2 |> Stream.toList
 
   upsert{{ pascalCase model }}' : {{ pascalCase model }} ->{g, Remote} ()
-  upsert{{ pascalCase model }}' pascalCaseModel =
-    pascalCaseModelId = {{ pascalCase model }}.id pascalCaseModel
-    OrderedTable.write pascalCaseModels pascalCaseModelId pascalCaseModel
+  upsert{{ pascalCase model }}' {{ pascalCase model }} =
+    {{ camelCase model }}Id = {{ pascalCase model }}.id {{ pascalCase model }}
+    OrderedTable.write {{ pascalCase model }}s {{ camelCase model }}Id {{ pascalCase model }}
 
   delete{{ pascalCase model }}' : {{ pascalCase model }}.Id ->{g, Remote} ()
-  delete{{ pascalCase model }}' pascalCaseModelId =
-    OrderedTable.delete pascalCaseModels pascalCaseModelId
+  delete{{ pascalCase model }}' {{ camelCase model }}Id =
+    OrderedTable.delete {{ pascalCase model }}s {{ camelCase model }}Id
 
   go : '{g, {{ pascalCase model }}Service} a -> {g, Remote} a
   go p = handle !p with cases
-    {upsert pascalCaseModel -> resume} ->
-      result = upsert{{ pascalCase model }}' pascalCaseModel
+    { {{ pascalCase model }}Service.upsert {{ camelCase model }} -> resume} ->
+      result = upsert{{ pascalCase model }}' {{ camelCase model }}
       go '(resume result)
-    { {{ pascalCase model }}Service.get pascalCaseModelId -> resume} ->
-      result = get{{ pascalCase model }}' pascalCaseModelId
+    { {{ pascalCase model }}Service.get {{ camelCase model }}Id -> resume} ->
+      result = get{{ pascalCase model }}' {{ camelCase model }}Id
       go '(resume result)
-    {getAll _ -> resume} ->
+    { {{ pascalCase model }}Service.getAll _ -> resume} ->
       result = getAll' ()
       go '(resume result)
-    {delete pascalCaseModelId -> resume} ->
-      result = delete{{ pascalCase model }}' pascalCaseModelId
+    { {{ pascalCase model }}Service.delete {{ camelCase model }}Id -> resume} ->
+      result = delete{{ pascalCase model }}' {{ camelCase model }}Id
       go '(resume result)
     { k } -> k
   go p
 
 routes : '{Route, Log, Exception} ()
 routes =
+  use Parser /
   get{{ pascalCase model }}s = do
     _ = Route.noCapture GET (Parser.s "{{ pascalCase model }}s")
     p [] [text "render them as html"] |> toText |> ok.html
@@ -57,13 +58,13 @@ routes =
     formData = getFormData()
     p [] [text "done"] |> toText |> ok.html
   get{{ pascalCase model }}= do
-    {{ pascalCase model }}Id = route GET (Parser.s "{{ pascalCase model }}s" / Parser.text)
+    {{ pascalCase model }}.Id = route GET (Parser.s "{{ pascalCase model }}s" / Parser.text)
     p [] [text "render it as html"] |> toText |> ok.html
   post{{ pascalCase model }}= do
-    {{ pascalCase model }}Id = route POST (Parser.s "{{ pascalCase model }}s" / Parser.text)
+    {{ pascalCase model }}.Id = route POST (Parser.s "{{ pascalCase model }}s" / Parser.text)
     formData = getFormData()
     p [] [text "done"] |> toText |> ok.html
   delete{{ pascalCase model }}= do
-    {{ pascalCase model }}Id = route DELETE (Parser.s "{{ pascalCase model }}s" / Parser.text)
+    {{ pascalCase model }}.Id = route DELETE (Parser.s "{{ pascalCase model }}s" / Parser.text)
     p [] [text "done"] |> toText |> ok.html
   get{{ pascalCase model }}s <|> post{{ pascalCase model }}s <|> get{{ pascalCase model }} <|> post{{ pascalCase model }} <|> delete{{ pascalCase model }}
