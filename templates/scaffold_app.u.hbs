@@ -386,6 +386,7 @@ web.page.page.full children =
           "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/shoelace-autoloader.js"
       ]
       []
+  tailwind = script [src "https://cdn.tailwindcss.com"] []
   hojberg_html_2_7_0.html
     []
     [ hojberg_html_2_7_0.head
@@ -395,6 +396,7 @@ web.page.page.full children =
         , shoelaceAutoloader
         , dataLoadingStateExtension
         , page.css
+        , tailwind
         ]
     , hojberg_html_2_7_0.body [hx_ext "loading-states"] children
     ]
