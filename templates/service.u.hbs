@@ -1,0 +1,46 @@
+type {{ pascalCase model }} = { id : {{ pascalCase model }}.Id }
+type {{ pascalCase model }}.Id = Id Text
+{{ pascalCase model }}.Id.unwrap = cases {{ pascalCase model }}.Id.Id v -> v
+
+ability {{ pascalCase model }}Service where
+  upsert : {{ pascalCase model }} ->{ {{ pascalCase model }}Service} ()
+  get : {{ pascalCase model }}.Id ->{ {{ pascalCase model }}Service} (Optional {{ pascalCase model }})
+  delete : {{ pascalCase model }}.Id ->{ {{ pascalCase model }}Service} ()
+  getAll : '{ {{ pascalCase model }}Service } (List {{ pascalCase model }})
+
+{{ pascalCase model }}Service.run : Database -> '{g, {{ pascalCase model }}Service} a -> {g, Remote} a
+{{ pascalCase model }}Service.run db p =
+  {{ pascalCase model }}s : OrderedTable ({{ pascalCase model }}.Id) {{ pascalCase model }}
+  {{ pascalCase model }}s = OrderedTable.named db "pascalCaseModels" Universal.ordering
+
+  get{{ pascalCase model }}' : {{ pascalCase model }}.Id ->{g, Remote} (Optional {{ pascalCase model }})
+  get{{ pascalCase model }}' pascalCaseModelId = OrderedTable.tryRead pascalCaseModels pascalCaseModelId
+
+  getAll' : '{g, Remote} (List {{ pascalCase model }})
+  getAll' = do OrderedTable.toStream pascalCaseModels |> Stream.map at2 |> Stream.toList
+
+  upsert{{ pascalCase model }}' : {{ pascalCase model }} ->{g, Remote} ()
+  upsert{{ pascalCase model }}' pascalCaseModel =
+    pascalCaseModelId = {{ pascalCase model }}.id pascalCaseModel
+    OrderedTable.write pascalCaseModels pascalCaseModelId pascalCaseModel
+
+  delete{{ pascalCase model }}' : {{ pascalCase model }}.Id ->{g, Remote} ()
+  delete{{ pascalCase model }}' pascalCaseModelId =
+    OrderedTable.delete pascalCaseModels pascalCaseModelId
+
+  go : '{g, {{ pascalCase model }}Service} a -> {g, Remote} a
+  go p = handle !p with cases
+    {upsert pascalCaseModel -> resume} ->
+      result = upsert{{ pascalCase model }}' pascalCaseModel
+      go '(resume result)
+    { {{ pascalCase model }}Service.get pascalCaseModelId -> resume} ->
+      result = get{{ pascalCase model }}' pascalCaseModelId
+      go '(resume result)
+    {getAll _ -> resume} ->
+      result = getAll' ()
+      go '(resume result)
+    {delete pascalCaseModelId -> resume} ->
+      result = delete{{ pascalCase model }}' pascalCaseModelId
+      go '(resume result)
+    { k } -> k
+  go p

@@ -21,4 +21,17 @@ export default function (plop) {
       templateFile: 'templates/shoelace.u.hbs'
     }]
   });
+  plop.setGenerator('scaffold-service', {
+    description: 'Scaffold a new service based on a new model. Includes stubbing the model, a service like ability, and routes',
+    prompts: [{
+      type: 'input',
+      name: 'model',
+      message: 'Model name:'
+    }],
+    actions: [{
+      type: 'add',
+      path: "./{{snakeCase model}}.u",
+      templateFile: 'templates/service.u.hbs'
+    }]
+  });
 };

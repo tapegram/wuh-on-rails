@@ -16,7 +16,5 @@ The current plan is to use a combo of [transcripts](https://www.unison-lang.org/
 
 ## Todos
 
-- Include shoelace types in app
-- Include htmx types in the app
 - Full service generator, based on Crud: ability, model, routes
 - Add auth generator
