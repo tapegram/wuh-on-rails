@@ -1,3 +1,5 @@
+namespace {{ camelCase model }}s
+
 type {{ pascalCase model }} = { id : {{ pascalCase model }}.Id }
 type {{ pascalCase model }}.Id = Id Text
 {{ pascalCase model }}.Id.unwrap = cases {{ pascalCase model }}.Id.Id v -> v
@@ -44,3 +46,24 @@ ability {{ pascalCase model }}Service where
       go '(resume result)
     { k } -> k
   go p
+
+routes : '{Route, Log, Exception} ()
+routes =
+  get{{ pascalCase model }}s = do
+    _ = Route.noCapture GET (Parser.s "{{ pascalCase model }}s")
+    p [] [text "render them as html"] |> toText |> ok.html
+  post{{ pascalCase model }}s = do
+    _ = Route.noCapture POST (Parser.s "{{ pascalCase model }}s")
+    formData = getFormData()
+    p [] [text "done"] |> toText |> ok.html
+  get{{ pascalCase model }}= do
+    {{ pascalCase model }}Id = route GET (Parser.s "{{ pascalCase model }}s" / Parser.text)
+    p [] [text "render it as html"] |> toText |> ok.html
+  post{{ pascalCase model }}= do
+    {{ pascalCase model }}Id = route POST (Parser.s "{{ pascalCase model }}s" / Parser.text)
+    formData = getFormData()
+    p [] [text "done"] |> toText |> ok.html
+  delete{{ pascalCase model }}= do
+    {{ pascalCase model }}Id = route DELETE (Parser.s "{{ pascalCase model }}s" / Parser.text)
+    p [] [text "done"] |> toText |> ok.html
+  get{{ pascalCase model }}s <|> post{{ pascalCase model }}s <|> get{{ pascalCase model }} <|> post{{ pascalCase model }} <|> delete{{ pascalCase model }}
