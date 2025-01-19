@@ -349,46 +349,17 @@ web.page.css.raw =
     margin: 0 auto;
   }
   
-  #todos sl-card {
-    opacity: 1;
-    transition: opacity 500ms ease-out;
-  }
-  
-  #todos sl-card.htmx-swapping {
-    opacity: 0;
-    transition: opacity 1s ease-out;
-  }
-  
-  #todos sl-card.htmx-added {
-    opacity: 0;
-  }
-  
-  .todoCard {
-    max-width: 700px;
-    min-width: 500px;
-    height: fit-content;
-    margin-bottom: 1em;
-  }
-  
-  .vflex {
+  .stack {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
   }
   
-  .hflex {
+  .hstack {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    column-gap: 1em;
-  }
-  
-  .hflexEnd {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: flex-end;
     column-gap: 1em;
   }
   """

@@ -14,8 +14,9 @@ This project exists as a tool to bootstrap and then rapidly generate common code
 
 The current plan is to use a combo of [transcripts](https://www.unison-lang.org/docs/tooling/transcripts/) and Plop. But it would be nice to build our own CLI to abstract over these
 
-## Todosk
+## Todos
 
-- Set up plop
-- Be able to bootstrap a new project
-- Add shoelace
+- Include shoelace types in app
+- Include htmx types in the app
+- Full service generator, based on Crud: ability, model, routes
+- Add auth generator
