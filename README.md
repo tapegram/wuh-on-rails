@@ -11,3 +11,11 @@ For quick intro talk, see [The WUH stack](https://www.youtube.com/watch?v=5l5MJI
 ## Code generation
 
 This project exists as a tool to bootstrap and then rapidly generate common code in WUH apps, in an opinionated way. Heavily inspired by Rails and Django.
+
+The current plan is to use a combo of [transcripts](https://www.unison-lang.org/docs/tooling/transcripts/) and Plop. But it would be nice to build our own CLI to abstract over these
+
+## Todosk
+
+- Set up plop
+- Be able to bootstrap a new project
+- Add shoelace

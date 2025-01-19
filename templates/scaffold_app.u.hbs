@@ -1,0 +1,435 @@
+-- This file is generated from the scaffold_app template
+-- You will need the following dependencies if you haven't added them already:
+-- lib.install @hojberg/html
+-- lib.install @tapegram/htmx
+-- lib.install @unison/cloud
+-- lib.install @unison/routes
+
+deploy.appName : Text
+deploy.appName = "{{kebabCase app_name}}"
+
+deploy.deployLocal : '{IO, Exception} URI
+deploy.deployLocal = main.local.serve do
+  environment = Environment.named localAppName
+  database = deploy.initializeStorage environment
+  serviceName = ServiceName.named localAppName
+  serviceHash = deployHttp environment (main.main database)
+  ServiceName.assign serviceName serviceHash
+
+deploy.deployProd : '{IO, Exception} URI
+deploy.deployProd = Cloud.main do
+  environment = Environment.default()
+  database = deploy.initializeStorage environment
+  serviceName = ServiceName.named appName
+  serviceHash = deployHttp environment (main.main database)
+  ServiceName.assign serviceName serviceHash
+
+deploy.deployStage : '{IO, Exception} URI
+deploy.deployStage = Cloud.main do
+  environment = Environment.named stageAppName
+  database = deploy.initializeStorage environment
+  serviceName = ServiceName.named stageAppName
+  serviceHash = deployHttp environment (main.main database)
+  ServiceName.assign serviceName serviceHash
+
+deploy.initializeStorage : Environment ->{Exception, Cloud} Database
+deploy.initializeStorage env =
+  use Text ++
+  dbName = env |> Environment.name ++ "db"
+  database = Database.named dbName
+  Database.assign database env
+  database
+
+deploy.localAppName : Text
+deploy.localAppName =
+  use Text ++
+  "local-" ++ appName
+
+deploy.stageAppName : Text
+deploy.stageAppName =
+  use Text ++
+  "stage-" ++ appName
+
+htmx.Attribute.dataLoadingAttribute : Attribute
+htmx.Attribute.dataLoadingAttribute = Attribute "data-loading-attribute" ""
+
+htmx.Attribute.dataLoadingDisable : Attribute
+htmx.Attribute.dataLoadingDisable = Attribute "data-loading-disable" ""
+
+htmx.Attribute.dataLoadingStates : Attribute
+htmx.Attribute.dataLoadingStates = Attribute "data-loading-states" ""
+
+htmx.dataLoadingStateExtension : Html
+htmx.dataLoadingStateExtension =
+  js =
+    """
+    ;(function() {
+      const loadingStatesUndoQueue = []
+    
+      function loadingStateContainer(target) {
+        return htmx.closest(target, '[data-loading-states]') || document.body
+      }
+    
+      function mayProcessUndoCallback(target, callback) {
+        if (document.body.contains(target)) {
+          callback()
+        }
+      }
+    
+      function mayProcessLoadingStateByPath(elt, requestPath) {
+        const pathElt = htmx.closest(elt, '[data-loading-path]')
+        if (!pathElt) {
+          return true
+        }
+    
+        return pathElt.getAttribute('data-loading-path') === requestPath
+      }
+    
+      function queueLoadingState(sourceElt, targetElt, doCallback, undoCallback) {
+        const delayElt = htmx.closest(sourceElt, '[data-loading-delay]')
+        if (delayElt) {
+          const delayInMilliseconds =
+            delayElt.getAttribute('data-loading-delay') || 200
+          const timeout = setTimeout(function() {
+            doCallback()
+    
+            loadingStatesUndoQueue.push(function() {
+              mayProcessUndoCallback(targetElt, undoCallback)
+            })
+          }, delayInMilliseconds)
+    
+          loadingStatesUndoQueue.push(function() {
+            mayProcessUndoCallback(targetElt, function() { clearTimeout(timeout) })
+          })
+        } else {
+          doCallback()
+          loadingStatesUndoQueue.push(function() {
+            mayProcessUndoCallback(targetElt, undoCallback)
+          })
+        }
+      }
+    
+      function getLoadingStateElts(loadingScope, type, path) {
+        return Array.from(htmx.findAll(loadingScope, '[' + type + ']')).filter(
+          function(elt) { return mayProcessLoadingStateByPath(elt, path) }
+        )
+      }
+    
+      function getLoadingTarget(elt) {
+        if (elt.getAttribute('data-loading-target')) {
+          return Array.from(
+            htmx.findAll(elt.getAttribute('data-loading-target'))
+          )
+        }
+        return [elt]
+      }
+    
+      htmx.defineExtension('loading-states', {
+        onEvent: function(name, evt) {
+          if (name === 'htmx:beforeRequest') {
+            const container = loadingStateContainer(evt.target)
+    
+            const loadingStateTypes = [
+              'data-loading',
+              'data-loading-class',
+              'data-loading-class-remove',
+              'data-loading-disable',
+              'data-loading-aria-busy',
+              'data-loading-attribute',
+            ]
+    
+            const loadingStateEltsByType = {}
+    
+            loadingStateTypes.forEach(function(type) {
+              loadingStateEltsByType[type] = getLoadingStateElts(
+                container,
+                type,
+                evt.detail.pathInfo.requestPath
+              )
+            })
+    
+            loadingStateEltsByType['data-loading'].forEach(function(sourceElt) {
+              getLoadingTarget(sourceElt).forEach(function(targetElt) {
+                queueLoadingState(
+                  sourceElt,
+                  targetElt,
+                  function() {
+                    targetElt.style.display =
+                      sourceElt.getAttribute('data-loading') ||
+                      'inline-block'
+                  },
+                  function() { targetElt.style.display = 'none' }
+                )
+              })
+            })
+    
+            loadingStateEltsByType['data-loading-class'].forEach(
+              function(sourceElt) {
+                const classNames = sourceElt
+                  .getAttribute('data-loading-class')
+                  .split(' ')
+    
+                getLoadingTarget(sourceElt).forEach(function(targetElt) {
+                  queueLoadingState(
+                    sourceElt,
+                    targetElt,
+                    function() {
+                      classNames.forEach(function(className) {
+                        targetElt.classList.add(className)
+                      })
+                    },
+                    function() {
+                      classNames.forEach(function(className) {
+                        targetElt.classList.remove(className)
+                      })
+                    }
+                  )
+                })
+              }
+            )
+    
+            loadingStateEltsByType['data-loading-class-remove'].forEach(
+              function(sourceElt) {
+                const classNames = sourceElt
+                  .getAttribute('data-loading-class-remove')
+                  .split(' ')
+    
+                getLoadingTarget(sourceElt).forEach(function(targetElt) {
+                  queueLoadingState(
+                    sourceElt,
+                    targetElt,
+                    function() {
+                      classNames.forEach(function(className) {
+                        targetElt.classList.remove(className)
+                      })
+                    },
+                    function() {
+                      classNames.forEach(function(className) {
+                        targetElt.classList.add(className)
+                      })
+                    }
+                  )
+                })
+              }
+            )
+    
+            loadingStateEltsByType['data-loading-disable'].forEach(
+              function(sourceElt) {
+                getLoadingTarget(sourceElt).forEach(function(targetElt) {
+                  queueLoadingState(
+                    sourceElt,
+                    targetElt,
+                    function() { targetElt.disabled = true },
+                    function() { targetElt.disabled = false }
+                  )
+                })
+              }
+            )
+            
+            loadingStateEltsByType['data-loading-attribute'].forEach(
+              function(sourceElt) {
+                getLoadingTarget(sourceElt).forEach(function(targetElt) {
+                  queueLoadingState(
+                    sourceElt,
+                    targetElt,
+                    function() { targetElt.loading = true },
+                    function() { targetElt.loading = false }
+                  )
+                })
+              }
+            )
+    
+            loadingStateEltsByType['data-loading-aria-busy'].forEach(
+              function(sourceElt) {
+                getLoadingTarget(sourceElt).forEach(function(targetElt) {
+                  queueLoadingState(
+                    sourceElt,
+                    targetElt,
+                    function() { targetElt.setAttribute('aria-busy', 'true') },
+                    function() { targetElt.removeAttribute('aria-busy') }
+                  )
+                })
+              }
+            )
+          }
+    
+          if (name === 'htmx:beforeOnLoad') {
+            while (loadingStatesUndoQueue.length > 0) {
+              loadingStatesUndoQueue.shift()()
+            }
+          }
+        }
+      })
+    })()
+    """
+  script [] [unsafeText js]
+
+htmx.hx_ext : Text -> Attribute
+htmx.hx_ext = Attribute "hx-ext"
+
+main.main :
+  Database
+  -> HttpRequest
+  ->{Exception, Storage, Remote, Random, Log} HttpResponse
+main.main _ req = Route.run main.routes req
+
+main.routes : '{Route, Log} ()
+main.routes =
+  use Parser / s
+  use Route <|>
+  helloWorld = do
+    _ = noCapture GET (s "")
+    ok.text "Hello, world"
+  helloWorld
+
+web.baseUrl : '{Route} Path
+web.baseUrl = do basePath (Headers request.headers())
+
+web.components.hflex : [Attribute] -> [Html] -> Html
+web.components.hflex _ = hojberg_html_2_7_0.div [class "hflex"]
+
+web.components.hflexEnd : ∀ _. _ -> [Html] -> Html
+web.components.hflexEnd _ = hojberg_html_2_7_0.div [class "hflexEnd"]
+
+web.components.vflex : [Attribute] -> [Html] -> Html
+web.components.vflex attrs =
+  use List +:
+  attrs' = class "vflex" +: attrs
+  hojberg_html_2_7_0.div attrs'
+
+web.form.getOnly! : Text -> Map Text [Text] ->{Exception} Text
+web.form.getOnly! name formData =
+  match Map.get name formData with
+    Some (value +: _) -> value
+    _ -> Exception.raise (failure ("Expected form value: " Text.++ name) name)
+
+web.form.getOnly!.doc : Doc
+web.form.getOnly!.doc =
+  \{{
+  formData is a text key mapped to a list of text values. Often you expect a
+  single value. This helper will grab it for you or raise an exception
+  }}
+
+web.okHtml : Html ->{Route} ()
+web.okHtml html = html |> hojberg_html_2_7_0.toText |> ok.html
+
+web.page.css : Html
+web.page.css = hojberg_html_2_7_0.style [] [unsafeText css.raw]
+
+web.page.css.raw : Text
+web.page.css.raw =
+  """
+  :root {
+    box-sizing: border-box;
+  }
+  
+  :not(:defined) {
+    visibility: hidden;
+  }
+  
+  [data-loading] {
+    display: none;
+  } 
+  
+  html, body {
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    font-family: var(--sl-font-sans) !important;
+  }
+  
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    margin: 0 auto;
+  }
+  
+  #todos sl-card {
+    opacity: 1;
+    transition: opacity 500ms ease-out;
+  }
+  
+  #todos sl-card.htmx-swapping {
+    opacity: 0;
+    transition: opacity 1s ease-out;
+  }
+  
+  #todos sl-card.htmx-added {
+    opacity: 0;
+  }
+  
+  .todoCard {
+    max-width: 700px;
+    min-width: 500px;
+    height: fit-content;
+    margin-bottom: 1em;
+  }
+  
+  .vflex {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .hflex {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    column-gap: 1em;
+  }
+  
+  .hflexEnd {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: flex-end;
+    column-gap: 1em;
+  }
+  """
+
+web.page.isPartialRequest : '{Route, Log} Boolean
+web.page.isPartialRequest = do request.header "hx-request" === ["true"]
+
+web.page.page : [Html] -> '{Route, Log} Html
+web.page.page children =
+  do if isPartialRequest() then page.partial children else full children
+
+web.page.page.full : [Html] -> Html
+web.page.page.full children =
+  shoelaceStyles =
+    hojberg_html_2_7_0.link
+      [ rel "stylesheet"
+      , href
+          "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/themes/dark.css"
+      ]
+  shoelaceAutoloader =
+    script
+      [ type_ "module"
+      , src
+          "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/shoelace-autoloader.js"
+      ]
+      []
+  hojberg_html_2_7_0.html
+    []
+    [ hojberg_html_2_7_0.head
+        []
+        [ htmxScript
+        , shoelaceStyles
+        , shoelaceAutoloader
+        , dataLoadingStateExtension
+        , page.css
+        ]
+    , hojberg_html_2_7_0.body [hx_ext "loading-states"] children
+    ]
+
+web.page.page.partial : [Html] -> Html
+web.page.page.partial children = hojberg_html_2_7_0.div [] children
+
+web.redirect : Path ->{Route} ()
+web.redirect path' =
+  headers.add "Location" (path' |> Path.toText)
+  setStatus (Status 301 "Move Permanently")
