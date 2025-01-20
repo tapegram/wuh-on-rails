@@ -16,5 +16,8 @@ The current plan is to use a combo of [transcripts](https://www.unison-lang.org/
 
 ## Todos
 
-- Full service generator, based on Crud: ability, model, routes
 - Add auth generator
+- Start building something with this and make updates
+- Really flesh out the forms with good examples
+- Should the default model have some example fields?
+- Should we remove the new typing for now? feels like it hurts more than it helps
