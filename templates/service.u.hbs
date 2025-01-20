@@ -47,24 +47,106 @@ ability {{ pascalCase model }}Service where
     { k } -> k
   go p
 
-routes : '{Route, Log, Exception} ()
+routes : '{Route, Log, Exception, {{ pascalCase model }}Service} ()
 routes =
   use Parser /
+
+  get{{ pascalCase model }}sForm = do
+    _ = Route.noCapture GET (Parser.s "{{ dashCase model }}s" / Parser.s "new")
+    page [ {{ camelCase model }}s.components.Form () ] () |> toText |> ok.html
+
   get{{ pascalCase model }}s = do
-    _ = Route.noCapture GET (Parser.s "{{ pascalCase model }}s")
+    _ = Route.noCapture GET (Parser.s "{{ dashCase model }}s")
     p [] [text "render them as html"] |> toText |> ok.html
+
   post{{ pascalCase model }}s = do
-    _ = Route.noCapture POST (Parser.s "{{ pascalCase model }}s")
+    _ = Route.noCapture POST (Parser.s "{{ dashCase model }}s")
+
+    -- Get data from form and create new instance
+    -- Then pass to the service
     formData = getFormData()
-    p [] [text "done"] |> toText |> ok.html
+    -- Example data from the example form
+    name = Map.get "name" formData
+    comment = Map.get "comment" formData
+    favorite_animal = Map.get "favorite-animal" formData
+    checked = Map.get "check-me" formData
+    
+    record = {{ pascalCase model }} (Id "1")
+    {{ pascalCase model }}Service.upsert record
+    
+    -- Hard coded always an ID of 1
+    redirect (baseUrl () Path./ "{{ dashCase model }}" Path./ "1" ) 
+
   get{{ pascalCase model }}= do
-    {{ pascalCase model }}.Id = route GET (Parser.s "{{ pascalCase model }}s" / Parser.text)
+    {{ pascalCase model }}Id = route GET (Parser.s "{{ dashCase model }}s" / Parser.text)
     p [] [text "render it as html"] |> toText |> ok.html
+
   post{{ pascalCase model }}= do
-    {{ pascalCase model }}.Id = route POST (Parser.s "{{ pascalCase model }}s" / Parser.text)
+    {{ pascalCase model }}Id = route POST (Parser.s "{{ dashCase model }}s" / Parser.text)
     formData = getFormData()
     p [] [text "done"] |> toText |> ok.html
+
   delete{{ pascalCase model }}= do
-    {{ pascalCase model }}.Id = route DELETE (Parser.s "{{ pascalCase model }}s" / Parser.text)
+    {{ pascalCase model }}Id = route DELETE (Parser.s "{{ dashCase model }}s" / Parser.text)
+    {{ pascalCase model }}Service.delete (Id.Id {{ pascalCase model }}Id)
     p [] [text "done"] |> toText |> ok.html
-  get{{ pascalCase model }}s <|> post{{ pascalCase model }}s <|> get{{ pascalCase model }} <|> post{{ pascalCase model }} <|> delete{{ pascalCase model }}
+
+  get{{ pascalCase model }}sForm <|> get{{ pascalCase model }}s <|> post{{ pascalCase model }}s <|> get{{ pascalCase model }} <|> post{{ pascalCase model }} <|> delete{{ pascalCase model }}
+  
+components.Form : '{Route} Html
+components.Form = do
+    form
+        [ class "p-4"
+        , hx_post (baseUrl () Path./ "posts" |> toText)
+        ]
+        [ sl_input
+            [ name "name"
+            , label "Name"
+            , required
+            ]
+            []
+        , br []
+        , sl_select
+            [ label "Favorite Animal"
+            , clearable
+            , required
+            , name "favorite-animal"
+            ]
+            [ sl_option
+                [ value "birds"
+                ]
+                [ text "Birds" ]
+            , sl_option
+                [ value "cats"
+                ]
+                [ text "Cats" ]
+            , sl_option
+                [ value "dogs"
+                ]
+                [ text "Dogs" ]
+            , sl_option
+                [ value "other"
+                ]
+                [ text "Other" ]
+            ]
+        , br []
+        , sl_textarea
+            [ name "comment"
+            , label "Comment"
+            , required 
+            ]
+            []
+        , br []
+        , sl_checkbox
+            [ required 
+            , name "check-me"
+            ]
+            [ text "Check me before submitting" ]
+        , br []
+        , br []
+        , sl_button
+            [ type_ "submit"
+            , variant "primary"
+            ]
+            [ text "Submit" ]
+        ]

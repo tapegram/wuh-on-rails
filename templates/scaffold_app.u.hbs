@@ -408,3 +408,6 @@ web.redirect : Path ->{Route} ()
 web.redirect path' =
   headers.add "Location" (path' |> Path.toText)
   setStatus (Status 301 "Move Permanently")
+
+up.html.Attribute.clearable = Attribute "clearable" ""
+up.html.Attribute.value = Attribute "value" 
