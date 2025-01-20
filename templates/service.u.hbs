@@ -81,8 +81,8 @@ routes =
     {{ pascalCase model }}Id = route GET (Parser.s "{{ dashCase model }}s" / Parser.text)
     p [] [text "render it as html"] |> toText |> ok.html
 
-  post{{ pascalCase model }}= do
-    {{ pascalCase model }}Id = route POST (Parser.s "{{ dashCase model }}s" / Parser.text)
+  put{{ pascalCase model }}= do
+    {{ pascalCase model }}Id = route PUT (Parser.s "{{ dashCase model }}s" / Parser.text)
     formData = getFormData()
     p [] [text "done"] |> toText |> ok.html
 
@@ -91,7 +91,7 @@ routes =
     {{ pascalCase model }}Service.delete (Id.Id {{ pascalCase model }}Id)
     p [] [text "done"] |> toText |> ok.html
 
-  get{{ pascalCase model }}sForm <|> get{{ pascalCase model }}s <|> post{{ pascalCase model }}s <|> get{{ pascalCase model }} <|> post{{ pascalCase model }} <|> delete{{ pascalCase model }}
+  get{{ pascalCase model }}sForm <|> get{{ pascalCase model }}s <|> post{{ pascalCase model }}s <|> get{{ pascalCase model }} <|> put{{ pascalCase model }} <|> delete{{ pascalCase model }}
   
 components.Form : '{Route} Html
 components.Form = do
